@@ -3,19 +3,21 @@ import express, { Request, Response } from "express";
 import createError from "http-errors"
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { expressjwt } from 'express-jwt';
+import bcrypt from 'bcrypt';
+import { generateToken, verifyToken } from './jwt'
 
 dotenv.config();
 
+const secret = 'm@klo123'
+
+const authenticate = expressjwt({ secret: secret, algorithms: ['HS256'] });
 const prisma = new PrismaClient()
 const app = express()
 
 app.use(express.json())
 
 const otp_server = process.env.OTP_SERVER || "http://localhost:5000"
-
-
-// TODO: Routing aplikasi akan kita tulis di sini
-
 
 // handle 404 error
 // app.use((req: Request, res: Response, next: Function) => {
@@ -93,7 +95,7 @@ app.post("/verify-otp", async (req: Request, res: Response) => {
         })
     }
 
-    if(!user.otp) {
+    if (!user.otp) {
         return res.json({
             message: "OTP not sent"
         })
@@ -112,12 +114,21 @@ app.post("/verify-otp", async (req: Request, res: Response) => {
             }
         })
 
-        return res.json({
-            message: "OTP verified"
-        })
+        const token = generateToken(username);
+        return res.json(
+            {
+                message: 'OTP verified',
+                token
+            }
+        );
     }
 
     return res.json({
         message: "Wrong OTP"
     })
 })
+
+// Example of a protected route
+app.get('/protected', authenticate, (req: Request, res: Response) => {
+    return res.json({ message: 'This is a protected route' });
+});
