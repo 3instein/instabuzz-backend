@@ -1,13 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
 import createError from "http-errors"
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const prisma = new PrismaClient()
 const app = express()
 
 app.use(express.json())
 
-const otp_server = "http://localhost:5000"
+const otp_server = process.env.OTP_SERVER || "http://localhost:5000"
 
 
 // TODO: Routing aplikasi akan kita tulis di sini
