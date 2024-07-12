@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
 import createError from "http-errors"
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -26,15 +27,97 @@ app.listen(3000, () =>
 )
 
 app.get("/send-otp/:username", async (req: Request, res: Response) => {
-    // hit the OTP server with username in the POST body
-    const username = req.params.username
-    const response = await fetch(`${otp_server}/send-otp`, {
-        method: "POST",
-        body: JSON.stringify({ username }),
-        headers: { "Content-Type": "application/json" },
+    // hit the OTP server with username in the POST body using axios
+    const { username } = req.params
+
+    const response = await axios.post(`${otp_server}/send-otp`, { username })
+
+    if (response.status === 200) {
+        const otp = response.data.otp
+
+        const existingUser = await prisma.user.findUnique({
+            where: {
+                username
+            }
+        })
+
+        if (existingUser) {
+            // update the user in the database
+            await prisma.user.update({
+                where: {
+                    username
+                },
+                data: {
+                    otp
+                }
+            })
+        } else {
+            const user = await prisma.user.create({
+                data: {
+                    username,
+                    otp
+                }
+            })
+        }
+
+        // create the user in the database
+
+        return res.json(
+            {
+                message: "OTP sent",
+                otp: otp
+            }
+        )
+
+    }
+
+    return res.json(
+        {
+            message: "Failed to send OTP"
+        }
+    )
+})
+
+app.post("/verify-otp", async (req: Request, res: Response) => {
+    const { username, otp } = req.body
+
+    const user = await prisma.user.findUnique({
+        where: {
+            username
+        }
     })
 
-    const data = await response.json()
+    if (!user) {
+        return res.json({
+            message: "User not found"
+        })
+    }
 
-    res.json(data)
+    if(!user.otp) {
+        return res.json({
+            message: "OTP not sent"
+        })
+    }
+
+    if (user.otp === otp) {
+
+        // update the user in the database
+        await prisma.user.update({
+            where: {
+                username
+            },
+            data: {
+                otp: null,
+                verified: true
+            }
+        })
+
+        return res.json({
+            message: "OTP verified"
+        })
+    }
+
+    return res.json({
+        message: "Wrong OTP"
+    })
 })
