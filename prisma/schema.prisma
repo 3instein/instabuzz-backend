@@ -16,5 +16,7 @@ datasource db {
 model User {
   id        Int     @default(autoincrement()) @id
   username  String  @unique
-  password  String  @db.VarChar(60)
+  otp       String? 
+  verified  Boolean @default(false)
+  createdAt DateTime @default(now())
 }
