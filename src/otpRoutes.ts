@@ -6,12 +6,12 @@ import { generateToken } from './jwt';
 const router = Router();
 const prisma = new PrismaClient();
 
-const otp_server = process.env.OTP_SERVER || "http://localhost:5000";
+const IG_BOT_URL = process.env.IG_BOT_URL || "http://localhost:5000";
 
 router.get("/send-otp/:username", async (req: Request, res: Response) => {
     const { username } = req.params;
 
-    const response = await axios.post(`${otp_server}/send-otp`, { username });
+    const response = await axios.post(`${IG_BOT_URL}/send-otp`, { username });
 
     if (response.status === 200) {
         const otp = response.data.otp;
