@@ -103,7 +103,10 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id: userId } = payload;
 
     const job = await prisma.job.findUnique({
-        where: { id: id }
+        where: {
+            id: id,
+            userId: userId
+        }
     });
 
     if (!job) {
