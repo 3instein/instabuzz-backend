@@ -79,6 +79,10 @@ router.get('/', authenticate, async (req, res) => {
         where: { userId: id }
     });
 
+    if(jobs.length === 0) {
+        return res.json({ message: "No jobs found" });
+    }
+
     return res.json(jobs);
 });
 
