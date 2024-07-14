@@ -7,8 +7,7 @@ const router = Router();
 router.get('/get-user', authenticate
 , (req: Request, res: Response) => {
 
-    const token = req.headers.authorization!.split(' ')[1];
-    const payload = decodeToken(token);
+    const payload = decodeToken(req, res);
 
     if (!payload) {
         return res.status(401).json({ message: 'Invalid token' });
