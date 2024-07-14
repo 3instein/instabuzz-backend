@@ -4,8 +4,7 @@ import { decodeToken } from '../jwt';
 
 const router = Router();
 
-router.get('/get-user', authenticate
-, (req: Request, res: Response) => {
+router.get('/get-user', (req: Request, res: Response) => {
 
     const payload = decodeToken(req, res);
 

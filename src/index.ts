@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import otpRoutes from './otpRoutes';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
-import { errorHandler } from './middlewares/auth';
+import { authenticate, errorHandler } from './middlewares/auth';
 
 dotenv.config();
 
@@ -11,8 +11,8 @@ const app = express();
 app.use(express.json());
 
 app.use('/api/otp', otpRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/jobs', jobsRoutes);
+app.use('/api/auth', authenticate, authRoutes);
+app.use('/api/jobs', authenticate, jobsRoutes);
 app.use(errorHandler);
 
 // handle 404 error

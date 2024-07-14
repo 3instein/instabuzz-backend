@@ -1,14 +1,13 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth";
 import { createJob, deleteJob, getJobById, getJobs, updateJob, validateJobSubmissionLink } from "../controllers/jobController";
 
 const router = Router();
 
-router.post('/create', authenticate, createJob)
-router.get('/', authenticate, getJobs);
-router.get('/:id', authenticate, getJobById);
-router.put('/update', authenticate, updateJob);
-router.delete('/delete', authenticate, deleteJob);
-router.post('/validate', authenticate, validateJobSubmissionLink);
+router.post('/create', createJob)
+router.get('/', getJobs);
+router.get('/:id', getJobById);
+router.put('/update', updateJob);
+router.delete('/delete', deleteJob);
+router.post('/validate', validateJobSubmissionLink);
 
 export default router;
