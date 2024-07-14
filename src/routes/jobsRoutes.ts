@@ -5,7 +5,6 @@ import { createJob, deleteJob, getJobById, getJobs, updateJob, validateJobSubmis
 const router = Router();
 
 router.post('/create', authenticate, createJob)
-router.post('/create', authenticate, createJob);
 router.get('/', authenticate, getJobs);
 router.get('/:id', authenticate, getJobById);
 router.put('/update', authenticate, updateJob);
