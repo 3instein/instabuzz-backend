@@ -14,9 +14,29 @@ datasource db {
 }
 
 model User {
-  id        Int     @default(autoincrement()) @id
-  username  String  @unique
-  otp       String? 
-  verified  Boolean @default(false)
+  id        String   @id @default(uuid())
+  username  String   @unique
+  otp       String?
+  verified  Boolean  @default(false)
+  jobs      Job[]
   createdAt DateTime @default(now())
+}
+
+model Job {
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  title        String
+  caption      String
+  startDate    DateTime
+  endDate      DateTime
+  keepDuration Int
+  type         JobType
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+enum JobType {
+  story
+  post
 }
