@@ -1,12 +1,23 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middlewares/auth';
+import { decodeToken } from '../jwt';
 
 const router = Router();
 
-// Example of a protected route
-router.get('/protected', authenticate
+router.get('/get-user', authenticate
 , (req: Request, res: Response) => {
-    return res.json({ message: 'This is a protected route' });
+
+    const token = req.headers.authorization!.split(' ')[1];
+    const payload = decodeToken(token);
+
+    if (!payload) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    return res.json({
+        id: payload.id,
+        username: payload.username
+    })
 });
 
 export default router;

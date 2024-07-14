@@ -10,9 +10,9 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-app.use('/api', otpRoutes);
-app.use('/api', authRoutes);
-app.use('/api', jobsRoutes);
+app.use('/api/otp', otpRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobsRoutes);
 app.use(errorHandler);
 
 // handle 404 error
