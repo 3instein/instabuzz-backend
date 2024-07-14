@@ -65,6 +65,41 @@ router.post('/create', authenticate, async (req, res) => {
     return res.json(response);
 });
 
+router.delete('/delete', authenticate, async (req, res) => {
+    const { id } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: "Job ID is required" });
+    }
+
+    const token = req.headers.authorization!.split(' ')[1];
+    const payload = decodeToken(token);
+
+    if (!payload) {
+        return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const { id: userId } = payload;
+
+    const job = await prisma.job.findUnique({
+        where: { id: id }
+    });
+
+    if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+    }
+
+    if (job.userId !== userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    await prisma.job.delete({
+        where: { id: id }
+    });
+
+    return res.json({ message: "Job deleted" });
+})
+
 router.post('/validate', authenticate, async (req, res) => {
     const { link } = req.body;
 
