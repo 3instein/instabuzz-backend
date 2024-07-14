@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import otpRoutes from './otpRoutes';
+import otpRoutes from './routes/otpRoutes';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
 import { authenticate, errorHandler } from './middlewares/auth';
