@@ -11,30 +11,35 @@ const IG_BOT_URL = process.env.IG_BOT_URL || "http://localhost:5000";
 router.get("/send-otp/:username", async (req: Request, res: Response) => {
     const { username } = req.params;
 
-    const response = await axios.post(`${IG_BOT_URL}/send-otp`, { username });
+    try {
+        const response = await axios.post(`${IG_BOT_URL}/send-otp`, { username });
 
-    if (response.status === 200) {
-        const otp = response.data.otp;
+        if (response.status === 200) {
+            const otp = response.data.otp;
 
-        const existingUser = await prisma.user.findUnique({
-            where: { username }
-        });
-
-        if (existingUser) {
-            await prisma.user.update({
-                where: { username },
-                data: { otp }
+            const existingUser = await prisma.user.findUnique({
+                where: { username }
             });
-        } else {
-            await prisma.user.create({
-                data: { username, otp }
-            });
+
+            if (existingUser) {
+                await prisma.user.update({
+                    where: { username },
+                    data: { otp }
+                });
+            } else {
+                await prisma.user.create({
+                    data: { username, otp }
+                });
+            }
+
+            return res.json({ message: "OTP sent", otp });
         }
 
-        return res.json({ message: "OTP sent", otp });
+        return res.status(response.status).json({ message: "Failed to send OTP" });
+    } catch (error: any) {
+        console.error(error);
+        return res.status(500).json({ message: "An error occurred", error: error.message });
     }
-
-    return res.json({ message: "Failed to send OTP" });
 });
 
 router.post("/verify-otp", async (req: Request, res: Response) => {
@@ -58,7 +63,7 @@ router.post("/verify-otp", async (req: Request, res: Response) => {
             data: { otp: null, verified: true }
         });
 
-        const token = generateToken(username);
+        const token = generateToken(user.id, username);
         return res.json({ message: 'OTP verified', token });
     }
 
