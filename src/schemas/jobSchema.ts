@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const jobSchema = z.object({
-    id: z.string().nullable(),
+    id: z.string().optional(),
     title: z.string(),
     caption: z.string(),
     startDate: z.string(),
