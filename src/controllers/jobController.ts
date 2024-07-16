@@ -156,10 +156,6 @@ export const updateJob = async (req: Request, res: Response) => {
         return res.status(400).json({ message: "End date cannot be before start date" });
     }
 
-    if (typeof keepDuration !== 'number') {
-        return res.status(400).json({ message: "Keep duration must be a number" });
-    }
-
     const job = await prisma.job.findUnique({
         where: { id }
     });
