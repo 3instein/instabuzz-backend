@@ -268,6 +268,10 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(401).json({ message: "Submission time is before start date" });
     }
 
+    if (new Date(botResponse.data.time) > new Date(job.endDate)) {
+        return res.status(401).json({ message: "Submission time is after end date" });
+    }
+
     const updatedJobUser = await prisma.jobUser.update({
         where: {
             id: joinedJob.id
