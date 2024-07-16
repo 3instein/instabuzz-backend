@@ -19,13 +19,16 @@ model User {
   otp       String?
   verified  Boolean  @default(false)
   jobs      Job[]
+  userJobs  JobUser[]
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Job {
   id           String   @id @default(uuid())
-  user         User     @relation(fields: [creatorId], references: [id])
+  creator      User     @relation(fields: [creatorId], references: [id])
   creatorId    String
+  JobsUsers    JobUser[]
   title        String
   caption      String
   startDate    DateTime
@@ -39,4 +42,14 @@ model Job {
 enum JobType {
   story
   post
+}
+
+model JobUser {
+  id        String @id @default(uuid())
+  job       Job    @relation(fields: [jobId], references: [id])
+  jobId     String
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
