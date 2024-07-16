@@ -51,7 +51,7 @@ export const createJob = async (req: Request, res: Response) => {
     res.json({ message: "Job created", job });
 };
 
-export const getJobs = async (req: Request, res: Response) => {
+export const getCreatedJobs = async (req: Request, res: Response) => {
     const payload = decodeToken(req, res);
 
     if (!payload) {
@@ -70,6 +70,34 @@ export const getJobs = async (req: Request, res: Response) => {
 
     res.json(jobs);
 };
+
+export const getAssignedJobs = async (req: Request, res: Response) => {
+    const payload = decodeToken(req, res);
+
+    if (!payload) {
+        return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const { id: userId } = payload
+
+    const jobs = await prisma.jobUser.findMany({
+        where: { userId }
+    });
+
+    if (jobs.length === 0) {
+        return res.json({ message: "No jobs found" });
+    }
+
+    const jobsData = await Promise.all(jobs.map(async (job) => {
+        const jobData = await prisma.job.findUnique({
+            where: { id: job.jobId }
+        });
+
+        return jobData;
+    }));
+
+    res.json(jobsData);
+}
 
 export const getJobById = async (req: Request, res: Response) => {
     const { id } = req.params;
