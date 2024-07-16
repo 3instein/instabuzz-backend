@@ -264,7 +264,7 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(401).json({ message: "Invalid caption" });
     }
 
-    if (botResponse.data.time < job.startDate) {
+    if (new Date(botResponse.data.time) < new Date(job.startDate)) {
         return res.status(401).json({ message: "Submission time is before start date" });
     }
 
