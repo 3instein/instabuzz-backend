@@ -34,7 +34,7 @@ export const createJob = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: userId } = payload
+    const { id: creatorId } = payload
 
     const job = await prisma.job.create({
         data: {
@@ -44,7 +44,7 @@ export const createJob = async (req: Request, res: Response) => {
             endDate,
             keepDuration,
             type,
-            userId
+            creatorId
         }
     });
 
@@ -58,10 +58,10 @@ export const getJobs = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: userId } = payload
+    const { id: creatorId } = payload
 
     const jobs = await prisma.job.findMany({
-        where: { userId }
+        where: { creatorId }
     });
 
     if (jobs.length === 0) {
@@ -79,7 +79,7 @@ export const getJobById = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: userId } = payload
+    const { id: creatorId } = payload
 
     const job = await prisma.job.findUnique({
         where: { id }
@@ -89,7 +89,7 @@ export const getJobById = async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Job not found" });
     }
 
-    if (job.userId !== userId) {
+    if (job.creatorId !== creatorId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -110,7 +110,7 @@ export const updateJob = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: userId } = payload
+    const { id: creatorId } = payload
 
     if (!id) {
         return res.status(400).json({ message: "Job ID is required" });
@@ -140,7 +140,7 @@ export const updateJob = async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Job not found" });
     }
 
-    if (job.userId !== userId) {
+    if (job.creatorId !== creatorId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -167,7 +167,7 @@ export const deleteJob = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: userId } = payload
+    const { id: creatorId } = payload
 
     if (!id) {
         return res.status(400).json({ message: "Job ID is required" });
@@ -181,7 +181,7 @@ export const deleteJob = async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Job not found" });
     }
 
-    if (job.userId !== userId) {
+    if (job.creatorId !== creatorId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -214,3 +214,50 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
 
     res.json(botResponse.data);
 };
+
+export const joinJob = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: "Job ID is required" });
+    }
+
+    const payload = decodeToken(req, res);
+
+    if (!payload) {
+        return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const { id: userId } = payload;
+
+    const job = await prisma.job.findUnique({
+        where: { id }
+    });
+
+    if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+    }
+
+    if(job.creatorId === userId) {
+        return res.status(400).json({ message: "Creator cannot join job they created" });
+    }
+
+    const existingJobUser = await prisma.jobUser.findFirst({
+        where: { jobId: job.id, userId }
+    });
+
+    if (existingJobUser) {
+        return res.status(400).json({ message: "User already joined job" });
+    }
+
+    const jobUser = await prisma.jobUser.create({
+        data: {
+            jobId: job.id,
+            userId
+        }
+    });
+
+    if(jobUser) {
+        res.json({ message: "User joined job" });
+    }
+}
