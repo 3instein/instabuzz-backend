@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { createJob, deleteJob, getJobById, getJobs, joinJob, updateJob, validateJobSubmissionLink } from "../controllers/jobController";
+import { createJob, deleteJob, getJobById, getCreatedJobs, joinJob, updateJob, validateJobSubmissionLink, getAssignedJobs } from "../controllers/jobController";
 
 const router = Router();
 
 router.post('/create', createJob)
-router.get('/', getJobs);
+router.get('/', getCreatedJobs);
+router.get('/assigned', getAssignedJobs)
 router.get('/:id', getJobById);
 router.put('/update', updateJob);
 router.delete('/delete', deleteJob);
