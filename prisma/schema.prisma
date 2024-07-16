@@ -24,8 +24,8 @@ model User {
 
 model Job {
   id           String   @id @default(uuid())
-  user         User     @relation(fields: [userId], references: [id])
-  userId       String
+  user         User     @relation(fields: [creatorId], references: [id])
+  creatorId    String
   title        String
   caption      String
   startDate    DateTime
