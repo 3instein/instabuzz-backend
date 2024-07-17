@@ -113,13 +113,35 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
 
     const jobsData = await Promise.all(jobs.map(async (job) => {
         const jobData = await prisma.job.findUnique({
-            where: { id: job.jobId }
+            where: { id: job.jobId },
+            include: {
+                JobsUsers: {
+                    select: {
+                        user: {
+                            select: {
+                                username: true
+                            }
+                        },
+                        verified: true,
+                        submissionTime: true
+                    },
+                    where: {
+                        userId: userId
+                    }
+                }
+            }
         });
 
         return jobData;
     }));
 
-    res.json(jobsData);
+    const transformedJobs = jobsData.map(job => ({
+        ...job,
+        late: job!.endDate > new Date(job!.JobsUsers[0].submissionTime) ? true : false,
+        JobsUsers: undefined // Remove the original JobsUsers field
+    }));
+
+    res.json(transformedJobs);
 }
 
 export const getJobById = async (req: Request, res: Response) => {
