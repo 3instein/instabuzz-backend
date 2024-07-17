@@ -152,21 +152,47 @@ export const getJobById = async (req: Request, res: Response) => {
         return res.status(401).json({ message: "Invalid token" });
     }
 
-    const { id: creatorId } = payload
+    const { id: userId } = payload
 
     const job = await prisma.job.findUnique({
-        where: { id }
+        where: { id },
+        include: {
+            JobsUsers: {
+                select: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true
+                        }
+                    },
+                    verified: true,
+                    submissionTime: true
+                }
+            }
+        }
     });
 
     if (!job) {
         return res.status(404).json({ message: "Job not found" });
     }
 
-    if (job.creatorId !== creatorId) {
+    const usersId = job.JobsUsers.map(jobsUser => jobsUser.user.id);
+
+    if (!usersId.includes(userId) && job.creatorId !== userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
 
-    res.json(job);
+    const transformedJob = {
+        ...job,
+        users: job.creatorId === userId ? job.JobsUsers.map(jobsUser => ({
+            username: jobsUser.user.username,
+            verified: jobsUser.verified,
+            late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
+        })) : undefined,
+        JobsUsers: undefined // Remove the original JobsUsers field
+    };
+
+    res.json(transformedJob);
 };
 
 export const updateJob = async (req: Request, res: Response) => {
