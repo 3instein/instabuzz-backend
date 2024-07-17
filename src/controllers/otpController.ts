@@ -26,7 +26,7 @@ export const sendOtp = async (req: Request, res: Response) => {
                 });
             } else {
                 await prisma.user.create({
-                    data: { username, otp }
+                    data: { username, otp, otpTime: new Date() }
                 });
             }
 
@@ -53,6 +53,13 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
     if (!user.otp) {
         return res.json({ message: "OTP not sent" });
+    }
+
+    const otpTime = new Date(user.otpTime);
+
+    // Check if OTP is expired 5 minutes after it was sent
+    if (new Date().getTime() - otpTime.getTime() > 5 * 60 * 1000) {
+        return res.json({ message: "OTP expired" });
     }
 
     if (user.otp === otp) {
