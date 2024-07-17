@@ -61,14 +61,37 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
     const { id: creatorId } = payload
 
     const jobs = await prisma.job.findMany({
-        where: { creatorId }
+        where: { creatorId },
+        include: {
+            JobsUsers: {
+                select: {
+                    user: {
+                        select: {
+                            username: true
+                        }
+                    },
+                    verified: true,
+                    submissionTime: true
+                }
+            }
+        }
     });
 
     if (jobs.length === 0) {
         return res.json({ message: "No jobs found" });
     }
 
-    res.json(jobs);
+    const transformedJobs = jobs.map(job => ({
+        ...job,
+        users: job.JobsUsers.map(jobsUser => ({
+            ...jobsUser.user,
+            verified: jobsUser.verified,
+            late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
+        })),
+        JobsUsers: undefined // Remove the original JobsUsers field
+    }));
+
+    res.json(transformedJobs);
 };
 
 export const getAssignedJobs = async (req: Request, res: Response) => {
@@ -264,24 +287,25 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(401).json({ message: "Invalid caption" });
     }
 
-    if (new Date(botResponse.data.time) < new Date(job.startDate)) {
-        return res.status(401).json({ message: "Submission time is before start date" });
-    }
+    // if (new Date(botResponse.data.time) < new Date(job.startDate)) {
+    //     return res.status(401).json({ message: "Submission time is before start date" });
+    // }
 
-    if (new Date(botResponse.data.time) > new Date(job.endDate)) {
-        return res.status(401).json({ message: "Submission time is after end date" });
-    }
+    // if (new Date(botResponse.data.time) > new Date(job.endDate)) {
+    //     return res.status(401).json({ message: "Submission time is after end date" });
+    // }
 
     const updatedJobUser = await prisma.jobUser.update({
         where: {
             id: joinedJob.id
         },
         data: {
-            verified: true
+            verified: true,
+            submissionTime: botResponse.data.time
         }
     });
 
-    if(!updatedJobUser) {
+    if (!updatedJobUser) {
         return res.status(500).json({ message: "Failed to update job user" });
     }
 
@@ -328,7 +352,8 @@ export const joinJob = async (req: Request, res: Response) => {
     const jobUser = await prisma.jobUser.create({
         data: {
             jobId: job.id,
-            userId
+            userId,
+            submissionTime: ""
         }
     });
 
