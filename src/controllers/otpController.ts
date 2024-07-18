@@ -22,7 +22,7 @@ export const sendOtp = async (req: Request, res: Response) => {
             if (existingUser) {
                 await prisma.user.update({
                     where: { username },
-                    data: { otp }
+                    data: { otp, otpTime: new Date() }
                 });
             } else {
                 await prisma.user.create({
