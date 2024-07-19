@@ -30,7 +30,7 @@ export const sendOtp = async (req: Request, res: Response) => {
                 });
             }
 
-            return res.json({ message: "OTP sent", otp });
+            return res.json({ message: "OTP sent"});
         }
 
         return res.status(response.status).json({ message: "Failed to send OTP" });
@@ -55,6 +55,10 @@ export const verifyOtp = async (req: Request, res: Response) => {
         return res.json({ message: "OTP not sent" });
     }
 
+    if (user.otp !== otp) {
+        return res.json({ message: "Wrong OTP" });
+    }
+
     const otpTime = new Date(user.otpTime);
 
     // Check if OTP is expired 5 minutes after it was sent
@@ -62,15 +66,11 @@ export const verifyOtp = async (req: Request, res: Response) => {
         return res.json({ message: "OTP expired" });
     }
 
-    if (user.otp === otp) {
-        await prisma.user.update({
-            where: { username },
-            data: { otp: null, verified: true }
-        });
+    await prisma.user.update({
+        where: { username },
+        data: { otp: null, verified: true }
+    });
 
-        const token = generateToken(user.id, username);
-        return res.json({ message: 'OTP verified', token });
-    }
-
-    return res.json({ message: "Wrong OTP" });
+    const token = generateToken(user.id, username);
+    return res.json({ message: 'OTP verified', token });
 }
