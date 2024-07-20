@@ -48,7 +48,7 @@ export const createJob = async (req: Request, res: Response) => {
         }
     });
 
-    res.json({ message: "Job created", job });
+    res.status(200).json({ message: "Job created", job });
 };
 
 export const getCreatedJobs = async (req: Request, res: Response) => {
@@ -78,7 +78,7 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
     });
 
     if (jobs.length === 0) {
-        return res.json({ message: "No jobs found" });
+        return res.status(200).json({ message: "No jobs found" });
     }
 
     const transformedJobs = jobs.map(job => ({
@@ -91,7 +91,7 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     }));
 
-    res.json(transformedJobs);
+    res.status(200).json({data: transformedJobs});
 };
 
 export const getAssignedJobs = async (req: Request, res: Response) => {
@@ -108,7 +108,7 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
     });
 
     if (jobs.length === 0) {
-        return res.json({ message: "No jobs found" });
+        return res.status(200).json({ message: "No jobs found" });
     }
 
     const jobsData = await Promise.all(jobs.map(async (job) => {
@@ -141,7 +141,7 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     }));
 
-    res.json(transformedJobs);
+    res.status(200).json({data: transformedJobs});
 }
 
 export const getJobById = async (req: Request, res: Response) => {
@@ -192,7 +192,7 @@ export const getJobById = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     };
 
-    res.json(transformedJob);
+    res.status(200).json(transformedJob);
 };
 
 export const updateJob = async (req: Request, res: Response) => {
@@ -251,7 +251,7 @@ export const updateJob = async (req: Request, res: Response) => {
         }
     });
 
-    res.json({ message: "Job updated", job: updatedJob });
+    res.status(200).json({ message: "Job updated", job: updatedJob });
 };
 
 export const deleteJob = async (req: Request, res: Response) => {
@@ -284,7 +284,7 @@ export const deleteJob = async (req: Request, res: Response) => {
         where: { id }
     });
 
-    res.json({ message: "Job deleted" });
+    res.status(200).json({ message: "Job deleted" });
 };
 
 export const validateJobSubmissionLink = async (req: Request, res: Response) => {
@@ -335,14 +335,6 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(401).json({ message: "Invalid caption" });
     }
 
-    // if (new Date(botResponse.data.time) < new Date(job.startDate)) {
-    //     return res.status(401).json({ message: "Submission time is before start date" });
-    // }
-
-    // if (new Date(botResponse.data.time) > new Date(job.endDate)) {
-    //     return res.status(401).json({ message: "Submission time is after end date" });
-    // }
-
     const updatedJobUser = await prisma.jobUser.update({
         where: {
             id: joinedJob.id
@@ -357,9 +349,7 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(500).json({ message: "Failed to update job user" });
     }
 
-    res.json({
-        message: "Submission link validated",
-    });
+    res.status(200).json({message: "Submission link validated",});
 };
 
 export const joinJob = async (req: Request, res: Response) => {
@@ -406,6 +396,6 @@ export const joinJob = async (req: Request, res: Response) => {
     });
 
     if (jobUser) {
-        res.json({ message: "User joined job" });
+        res.status(200).json({ message: "User joined job" });
     }
 }
