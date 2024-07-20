@@ -9,7 +9,7 @@ type TokenPayload = {
 };
 
 export const generateToken = (id: string, username: string) => {
-    return jwt.sign({ id, username }, secret, { expiresIn: '1h' });
+    return jwt.sign({ id, username }, secret, { expiresIn: '7d' });
 };
 
 export const decodeToken = (req: Request, res: Response): TokenPayload | null => {
