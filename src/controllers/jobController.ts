@@ -251,7 +251,7 @@ export const updateJob = async (req: Request, res: Response) => {
         }
     });
 
-    res.status(200).json({ message: "Job updated", job: updatedJob });
+    res.status(200).json({job: updatedJob });
 };
 
 export const deleteJob = async (req: Request, res: Response) => {
