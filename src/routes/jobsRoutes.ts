@@ -4,7 +4,7 @@ import { createJob, deleteJob, getJobById, getCreatedJobs, joinJob, updateJob, v
 const router = Router();
 
 router.post('/create', createJob)
-router.get('/', getCreatedJobs);
+router.get('/created', getCreatedJobs);
 router.get('/assigned', getAssignedJobs)
 router.get('/:id', getJobById);
 router.put('/update', updateJob);
