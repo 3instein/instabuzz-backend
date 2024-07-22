@@ -85,6 +85,7 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
         ...job,
         users: job.JobsUsers.map(jobsUser => ({
             ...jobsUser.user,
+            submitted: jobsUser.submissionTime ? true : false,
             verified: jobsUser.verified,
             late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
         })),
@@ -186,6 +187,7 @@ export const getJobById = async (req: Request, res: Response) => {
         ...job,
         users: job.creatorId === userId ? job.JobsUsers.map(jobsUser => ({
             username: jobsUser.user.username,
+            submitted: jobsUser.submissionTime ? true : false,
             verified: jobsUser.verified,
             late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
         })) : undefined,
