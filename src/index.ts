@@ -3,13 +3,14 @@ import dotenv from 'dotenv';
 import otpRoutes from './routes/otpRoutes';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
-import { authenticate, errorHandler } from './middlewares/auth';
+import { authenticate } from './middlewares/auth';
 import addSuccessField from './middlewares/addSuccessField';
 import { PrismaClient } from '@prisma/client';
+import { errorHandler } from './errorHandler';
 
 dotenv.config();
 
-const prisma  = new PrismaClient();
+const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 
