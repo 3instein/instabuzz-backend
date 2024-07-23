@@ -58,13 +58,13 @@ export const createJob = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Media is required" });
         }
 
-        jobData.media = req.file.path.split("/").pop();
+        jobData.media = req.file.filename;
 
         const job = await prisma.job.create({
             data: jobData
         });
 
-        res.status(200).json({data: job});
+        res.status(200).json({ data: job });
     } catch (error) {
         console.error('Error creating job:', error);
         res.status(500).json({ message: "Internal server error" });
