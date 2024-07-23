@@ -8,4 +8,5 @@ export const jobSchema = z.object({
     endDate: z.string(),
     keepDuration: z.number(),
     type: z.string(),
+    media: z.string().optional()
 });
