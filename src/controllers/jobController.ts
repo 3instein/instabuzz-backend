@@ -8,47 +8,67 @@ const prisma = new PrismaClient();
 const IG_BOT_URL = process.env.IG_BOT_URL || "http://localhost:5000";
 
 export const createJob = async (req: Request, res: Response) => {
-    const parseResult = jobSchema.safeParse(req.body);
+    try {
+        // Parse keepDuration from string to number
+        const { keepDuration, ...rest } = req.body;
+        const parsedBody = {
+            ...rest,
+            keepDuration: parseInt(keepDuration, 10),
+        };
 
-    if (!parseResult.success) {
-        return res.status(400).json({ message: parseResult.error });
-    }
+        const parseResult = jobSchema.safeParse(parsedBody);
 
-    const { title, caption, startDate, endDate, keepDuration, type } = req.body;
+        if (!parseResult.success) {
+            return res.status(400).json({ message: parseResult.error });
+        }
 
-    if (new Date(startDate) < new Date()) {
-        return res.status(400).json({ message: "Start date cannot be in the past" });
-    }
+        const { title, caption, startDate, endDate, type } = parsedBody;
 
-    if (new Date(endDate) < new Date()) {
-        return res.status(400).json({ message: "End date cannot be in the past" });
-    }
+        if (new Date(startDate) < new Date()) {
+            return res.status(400).json({ message: "Start date cannot be in the past" });
+        }
 
-    if (new Date(endDate) < new Date(startDate)) {
-        return res.status(400).json({ message: "End date cannot be before start date" });
-    }
+        if (new Date(endDate) < new Date()) {
+            return res.status(400).json({ message: "End date cannot be in the past" });
+        }
 
-    const payload = decodeToken(req, res);
+        if (new Date(endDate) < new Date(startDate)) {
+            return res.status(400).json({ message: "End date cannot be before start date" });
+        }
 
-    if (!payload) {
-        return res.status(401).json({ message: "Invalid token" });
-    }
+        const payload = decodeToken(req, res);
 
-    const { id: creatorId } = payload
+        if (!payload) {
+            return res.status(401).json({ message: "Invalid token" });
+        }
 
-    const job = await prisma.job.create({
-        data: {
+        const { id: creatorId } = payload;
+
+        const jobData: any = {
             title,
             caption,
             startDate,
             endDate,
-            keepDuration,
+            keepDuration: parsedBody.keepDuration,
             type,
-            creatorId
-        }
-    });
+            creatorId,
+        };
 
-    res.status(200).json({ message: "Job created", job });
+        if (!req.file) {
+            return res.status(400).json({ message: "Media is required" });
+        }
+
+        jobData.media = req.file.path.split("/").pop();
+
+        const job = await prisma.job.create({
+            data: jobData
+        });
+
+        res.status(200).json({data: job});
+    } catch (error) {
+        console.error('Error creating job:', error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 };
 
 export const getCreatedJobs = async (req: Request, res: Response) => {
@@ -85,13 +105,14 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
         ...job,
         users: job.JobsUsers.map(jobsUser => ({
             ...jobsUser.user,
+            submitted: jobsUser.submissionTime ? true : false,
             verified: jobsUser.verified,
             late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
         })),
         JobsUsers: undefined // Remove the original JobsUsers field
     }));
 
-    res.status(200).json({data: transformedJobs});
+    res.status(200).json({ data: transformedJobs });
 };
 
 export const getAssignedJobs = async (req: Request, res: Response) => {
@@ -141,7 +162,7 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     }));
 
-    res.status(200).json({data: transformedJobs});
+    res.status(200).json({ data: transformedJobs });
 }
 
 export const getJobById = async (req: Request, res: Response) => {
@@ -186,6 +207,7 @@ export const getJobById = async (req: Request, res: Response) => {
         ...job,
         users: job.creatorId === userId ? job.JobsUsers.map(jobsUser => ({
             username: jobsUser.user.username,
+            submitted: jobsUser.submissionTime ? true : false,
             verified: jobsUser.verified,
             late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
         })) : undefined,
@@ -251,7 +273,7 @@ export const updateJob = async (req: Request, res: Response) => {
         }
     });
 
-    res.status(200).json({ message: "Job updated", job: updatedJob });
+    res.status(200).json({ job: updatedJob });
 };
 
 export const deleteJob = async (req: Request, res: Response) => {
@@ -349,7 +371,7 @@ export const validateJobSubmissionLink = async (req: Request, res: Response) => 
         return res.status(500).json({ message: "Failed to update job user" });
     }
 
-    res.status(200).json({message: "Submission link validated",});
+    res.status(200).json({ message: "Submission link validated", });
 };
 
 export const joinJob = async (req: Request, res: Response) => {
