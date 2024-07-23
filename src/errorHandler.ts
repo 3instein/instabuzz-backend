@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError } from 'express-jwt';
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.log(err);
     if (err instanceof UnauthorizedError) {
         // Handle JWT authentication errors
         return res.status(401).json({ message: 'Invalid token' });
