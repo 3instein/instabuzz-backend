@@ -22,7 +22,7 @@ export const createJob = async (req: Request, res: Response) => {
             return res.status(400).json({ message: parseResult.error });
         }
 
-        const { title, caption, startDate, endDate, type } = parsedBody;
+        const { title, caption, startDate, endDate, type, media } = parsedBody;
 
         if (new Date(startDate) < new Date()) {
             return res.status(400).json({ message: "Start date cannot be in the past" });
@@ -54,7 +54,7 @@ export const createJob = async (req: Request, res: Response) => {
             creatorId,
         };
 
-        if (!req.file) {
+        if (!req.file || req.file.fieldname !== "media") {
             return res.status(400).json({ message: "Media is required" });
         }
 
