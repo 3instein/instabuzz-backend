@@ -3,10 +3,10 @@ import dotenv from 'dotenv';
 import otpRoutes from './routes/otpRoutes';
 import authRoutes from './routes/authRoutes';
 import jobsRoutes from './routes/jobsRoutes';
-import { authenticate } from './middlewares/auth';
+import { authenticate, existingUser } from './middlewares/auth';
 import addSuccessField from './middlewares/addSuccessField';
 import { PrismaClient } from '@prisma/client';
-import { errorHandler } from './errorHandler';
+import { errorHandler } from './middlewares/errorHandler';
 
 dotenv.config();
 
@@ -15,6 +15,7 @@ const app = express();
 app.use(express.json());
 
 app.use(addSuccessField);
+app.use(existingUser);
 app.use('/api/otp', otpRoutes);
 app.use('/api/auth', authenticate, authRoutes);
 app.use('/api/jobs', authenticate, jobsRoutes);
