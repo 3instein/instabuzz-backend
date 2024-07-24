@@ -215,7 +215,7 @@ export const getJobById = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     };
 
-    res.status(200).json(transformedJob);
+    res.status(200).json({data: transformedJob});
 };
 
 export const updateJob = async (req: Request, res: Response) => {
