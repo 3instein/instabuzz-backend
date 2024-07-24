@@ -16,10 +16,10 @@ app.use(express.json());
 
 app.use(addSuccessField);
 app.use('/api/otp', otpRoutes);
+app.use('/uploads', express.static('src/uploads'));
 app.use(existingUser)
 app.use('/api/auth', authenticate, authRoutes);
 app.use('/api/jobs', authenticate, jobsRoutes);
-app.use('/uploads', express.static('src/uploads'));
 
 // handle 404 error
 app.use((req, res, next) => {
