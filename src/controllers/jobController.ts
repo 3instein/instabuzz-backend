@@ -158,6 +158,8 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
 
     const transformedJobs = jobsData.map(job => ({
         ...job,
+        submitted: job!.JobsUsers[0].submissionTime ? true : false,
+        verified: job!.JobsUsers[0].verified,
         late: job!.endDate > new Date(job!.JobsUsers[0].submissionTime) ? true : false,
         JobsUsers: undefined // Remove the original JobsUsers field
     }));
