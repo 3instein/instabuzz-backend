@@ -24,15 +24,24 @@ export const createJob = async (req: Request, res: Response) => {
 
         const { title, caption, startDate, endDate, type } = parsedBody;
 
-        if (new Date(startDate) < new Date()) {
+        const startDateGMT7 = new Date(startDate);
+        const endDateGMT7 = new Date(endDate);
+        const now = new Date();
+
+        // Ensure dates are in GMT
+        const startDateGMT = new Date(startDateGMT7.toISOString());
+        const endDateGMT = new Date(endDateGMT7.toISOString());
+        const nowGMT = new Date(now.toISOString());
+
+        if (startDateGMT < nowGMT) {
             return res.status(400).json({ message: "Start date cannot be in the past" });
         }
 
-        if (new Date(endDate) < new Date()) {
+        if (endDateGMT < nowGMT) {
             return res.status(400).json({ message: "End date cannot be in the past" });
         }
 
-        if (new Date(endDate) < new Date(startDate)) {
+        if (endDateGMT < startDateGMT) {
             return res.status(400).json({ message: "End date cannot be before start date" });
         }
 
@@ -217,7 +226,7 @@ export const getJobById = async (req: Request, res: Response) => {
         JobsUsers: undefined // Remove the original JobsUsers field
     };
 
-    res.status(200).json({data: transformedJob});
+    res.status(200).json({ data: transformedJob });
 };
 
 export const updateJob = async (req: Request, res: Response) => {
