@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import axios from "axios";
 import { jobSchema } from "../schemas/jobSchema";
 import { decodeToken } from "../jwt";
+import { isDateOlder } from "../helpers/date";
 
 const prisma = new PrismaClient();
 const IG_BOT_URL = process.env.IG_BOT_URL || "http://localhost:5000";
@@ -24,24 +25,15 @@ export const createJob = async (req: Request, res: Response) => {
 
         const { title, caption, startDate, endDate, type } = parsedBody;
 
-        const startDateGMT7 = new Date(startDate);
-        const endDateGMT7 = new Date(endDate);
-        const now = new Date();
-
-        // Ensure dates are in GMT
-        const startDateGMT = new Date(startDateGMT7.toISOString());
-        const endDateGMT = new Date(endDateGMT7.toISOString());
-        const nowGMT = new Date(now.toISOString());
-
-        if (startDateGMT < nowGMT) {
+        if (isDateOlder(new Date(startDate), new Date())) {
             return res.status(400).json({ message: "Start date cannot be in the past" });
         }
 
-        if (endDateGMT < nowGMT) {
+        if (isDateOlder(new Date(endDate), new Date())) {
             return res.status(400).json({ message: "End date cannot be in the past" });
         }
 
-        if (endDateGMT < startDateGMT) {
+        if (isDateOlder(new Date(endDate), new Date(startDate))) {
             return res.status(400).json({ message: "End date cannot be before start date" });
         }
 
@@ -110,16 +102,26 @@ export const getCreatedJobs = async (req: Request, res: Response) => {
         return res.status(200).json({ message: "No jobs found" });
     }
 
-    const transformedJobs = jobs.map(job => ({
-        ...job,
-        users: job.JobsUsers.map(jobsUser => ({
-            ...jobsUser.user,
-            submitted: jobsUser.submissionTime ? true : false,
-            verified: jobsUser.verified,
-            late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
-        })),
-        JobsUsers: undefined // Remove the original JobsUsers field
-    }));
+    const transformedJobs = jobs.map(job => {
+        const users = job.JobsUsers.map(jobsUser => {
+            const { user, submissionTime, verified } = jobsUser;
+            const submitted = Boolean(submissionTime);
+            const late = submitted && isDateOlder(job.endDate, new Date(submissionTime));
+
+            return {
+                ...user,
+                submitted,
+                verified,
+                late
+            };
+        });
+
+        return {
+            ...job,
+            users,
+            JobsUsers: undefined // Remove the original JobsUsers field
+        };
+    });
 
     res.status(200).json({ data: transformedJobs });
 };
@@ -165,13 +167,25 @@ export const getAssignedJobs = async (req: Request, res: Response) => {
         return jobData;
     }));
 
-    const transformedJobs = jobsData.map(job => ({
-        ...job,
-        submitted: job!.JobsUsers[0].submissionTime ? true : false,
-        verified: job!.JobsUsers[0].verified,
-        late: job!.endDate > new Date(job!.JobsUsers[0].submissionTime) ? true : false,
-        JobsUsers: undefined // Remove the original JobsUsers field
-    }));
+    const transformedJobs = jobsData.map(job => {
+        if (job) {
+            const jobUser = job.JobsUsers[0];
+            const submissionTime = jobUser.submissionTime;
+            const endDate = job.endDate;
+
+            const submitted = Boolean(submissionTime);
+            const late = submitted ? isDateOlder(endDate, new Date(submissionTime)) : false;
+
+            return {
+                ...job,
+                submitted,
+                verified: jobUser.verified,
+                late,
+                JobsUsers: undefined // Remove the original JobsUsers field
+            };
+        }
+    });
+
 
     res.status(200).json({ data: transformedJobs });
 }
@@ -216,15 +230,24 @@ export const getJobById = async (req: Request, res: Response) => {
 
     const transformedJob = {
         ...job,
-        users: job.creatorId === userId ? job.JobsUsers.map(jobsUser => ({
-            username: jobsUser.user.username,
-            submissionTime: jobsUser.submissionTime,
-            submitted: jobsUser.submissionTime ? true : false,
-            verified: jobsUser.verified,
-            late: job.endDate > new Date(jobsUser.submissionTime) ? true : false
-        })) : undefined,
+        users: job.creatorId === userId
+            ? job.JobsUsers.map(jobsUser => {
+                const { user, submissionTime, verified } = jobsUser;
+                const submitted = Boolean(submissionTime);
+                const late = submitted ? isDateOlder(job.endDate, new Date(submissionTime)) : false;
+
+                return {
+                    username: user.username,
+                    submissionTime,
+                    submitted,
+                    verified,
+                    late
+                };
+            })
+            : undefined,
         JobsUsers: undefined // Remove the original JobsUsers field
     };
+
 
     res.status(200).json({ data: transformedJob });
 };
