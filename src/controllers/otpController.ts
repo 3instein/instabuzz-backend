@@ -9,32 +9,35 @@ const IG_BOT_URL = process.env.IG_BOT_URL || "http://localhost:5000";
 export const sendOtp = async (req: Request, res: Response) => {
     const { username } = req.params;
 
+    // Generate a random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     if (!username) {
         return res.status(400).json({ message: "Username is required" });
     }
 
+    const existingUser = await prisma.user.findUnique({
+        where: { username }
+    });
+
+    if (existingUser) {
+        await prisma.user.update({
+            where: { username },
+            data: { otp, otpTime: new Date() }
+        });
+    } else {
+        await prisma.user.create({
+            data: { username, otp, otpTime: new Date() }
+        });
+    }
+
     try {
-        const response = await axios.post(`${IG_BOT_URL}/send-otp`, { username });
+        const response = await axios.post(`${IG_BOT_URL}/send-otp`, { username, otp });
 
         if (response.status === 200) {
-            const otp = response.data.otp;
 
-            const existingUser = await prisma.user.findUnique({
-                where: { username }
-            });
 
-            if (existingUser) {
-                await prisma.user.update({
-                    where: { username },
-                    data: { otp, otpTime: new Date() }
-                });
-            } else {
-                await prisma.user.create({
-                    data: { username, otp, otpTime: new Date() }
-                });
-            }
-
-            return res.status(200).json({ message: "OTP sent"});
+            return res.status(200).json({ message: "OTP sent" });
         }
 
         return res.status(response.status).json({ message: "Failed to send OTP" });
